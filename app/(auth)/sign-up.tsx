@@ -1,5 +1,6 @@
 import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
+import { ROUTES } from "@/constants";
 import { createUser } from "@/libs/Appwrite";
 import { Link, router } from "expo-router";
 import { useState } from "react";
@@ -22,7 +23,7 @@ const SignUp = () => {
 
     try {
       await createUser({ email, password, name });
-      router.replace("/");
+      router.replace(ROUTES.home);
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {

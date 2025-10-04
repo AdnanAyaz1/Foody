@@ -204,4 +204,6 @@ export const images = {
 
 export const ROUTES = {
   sign_up: "/(auth)/sign-up" as Href,
+  sign_in: "/(auth)/sign-in" as Href,
+  home: "/(tabs)" as Href,
 } as const;

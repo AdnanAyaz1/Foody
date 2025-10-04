@@ -11,7 +11,7 @@ import {
 export const appwriteConfig = {
   endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!,
   projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!,
-  platform: "com.Foody.FastFood",
+  platform: "com.Foody.FastFoods",
   databaseId: "68e12cd6000e4c0f50bc",
   userCollectionId: "users",
 };
@@ -66,14 +66,20 @@ export const getCurrentUser = async (): Promise<User | null> => {
     const currentUser = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.userCollectionId,
-      [Query.equal("accountId", currentAccount.$id)]
+      [Query.equal("email", currentAccount.email)]
     );
 
     if (!currentUser) throw Error;
 
-    return currentUser.documents[0];
+    return currentUser?.total === 0
+      ? null
+      : ({
+          name: currentUser.documents[0].name as string,
+          email: currentUser.documents[0].email as string,
+          avatar: currentUser.documents[0].avatar as string,
+        } as User);
   } catch (e) {
-    console.log(e);
+    console.log("this is catch", e);
     throw new Error(e as string);
   }
 };
