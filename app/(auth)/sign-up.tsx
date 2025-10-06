@@ -1,62 +1,96 @@
+// app/(auth)/sign-up.tsx
 import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
-import { ROUTES } from "@/constants";
-import { createUser } from "@/libs/Appwrite";
-import { Link, router } from "expo-router";
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Link } from "expo-router";
+import { useForm } from "react-hook-form";
 import { Alert, Text, View } from "react-native";
 
+import { signUpSchema, SignUpSchema } from "@/libs/schemas/signUpSchema";
+import useAuthStore from "@/store/auth.store";
+
 const SignUp = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const { setUser, setIsAuthenticated } = useAuthStore();
+  const {
+    control,
+    handleSubmit,
+    reset,
+    getValues,
+    formState: { isSubmitting, isValid },
+  } = useForm<SignUpSchema>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: { name: "", email: "", password: "" },
+  });
 
-  const submit = async () => {
-    const { name, email, password } = form;
+  const onSubmit = async (data: SignUpSchema) => {
+    const password = getValues("password");
 
-    if (!name || !email || !password)
-      return Alert.alert(
-        "Error",
-        "Please enter valid email address & password."
-      );
+    const isValidPassword =
+      password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password) &&
+      /[^A-Za-z0-9]/.test(password);
 
-    setIsSubmitting(true);
+    if (!isValidPassword) return;
 
     try {
-      await createUser({ email, password, name });
-      router.replace(ROUTES.home);
+      const res = await fetch(`/api/auth/sign_up`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const resJson = await res.json();
+
+      if (!res.ok) throw new Error(resJson.error?.message || "Signup failed");
+      Alert.alert("Success", "Account created successfully!");
+      reset();
+      const user = resJson.data.user;
+      setUser({
+        name: user.name as string,
+        email: user.email as string,
+        avatar: user.image as string,
+      });
+
+      setIsAuthenticated(true);
+
+      await AsyncStorage.setItem("token", resJson.jwtToken);
     } catch (error: any) {
       Alert.alert("Error", error.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
-    <View className="gap-10 p-5 mt-5 bg-white rounded-lg">
+    <View className="gap-6 p-5 mt-5 bg-white rounded-lg">
       <CustomInput
+        control={control}
+        name="name"
+        label="Full Name"
         placeholder="Enter your full name"
-        value={form.name}
-        onChangeText={(text) => setForm((prev) => ({ ...prev, name: text }))}
-        label="Full name"
       />
       <CustomInput
-        placeholder="Enter your email"
-        value={form.email}
-        onChangeText={(text) => setForm((prev) => ({ ...prev, email: text }))}
+        control={control}
+        name="email"
         label="Email"
+        placeholder="Enter your email"
         keyboardType="email-address"
       />
       <CustomInput
-        placeholder="Enter your password"
-        value={form.password}
-        onChangeText={(text) =>
-          setForm((prev) => ({ ...prev, password: text }))
-        }
+        control={control}
+        name="password"
         label="Password"
-        secureTextEntry={true}
+        placeholder="Enter your password"
+        secureTextEntry
       />
 
-      <CustomButton title="Sign Up" isLoading={isSubmitting} onPress={submit} />
+      <CustomButton
+        title="Sign Up"
+        disabled={!isValid}
+        isLoading={isSubmitting}
+        onPress={handleSubmit(onSubmit)}
+      />
 
       <View className="flex flex-row justify-center gap-2 mt-5">
         <Text className="text-gray-100 base-regular">

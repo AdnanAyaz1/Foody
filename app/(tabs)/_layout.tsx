@@ -7,9 +7,9 @@ import React from "react";
 import { Image, Text, View } from "react-native";
 
 const Layout = () => {
-  const { isAuthenticated } = useAuthStore();
+  const isAuthenticated = useAuthStore();
 
-  if (!isAuthenticated) return <Redirect href={ROUTES.sign_in} />;
+  if (!isAuthenticated) return <Redirect href={ROUTES.sign_up} />;
 
   const TabBarIcon = ({ focused, icon, title }: TabBarIconProps) => (
     <View className="tab-icon">

@@ -16,7 +16,7 @@ export interface Category extends Models.Document {
   description: string;
 }
 
-export interface User extends Models.Document {
+export interface User {
   name: string;
   email: string;
   avatar: string;
@@ -69,6 +69,7 @@ interface CustomButtonProps {
   leftIcon?: React.ReactNode;
   textStyle?: string;
   isLoading?: boolean;
+  disabled?: boolean;
 }
 
 interface CustomHeaderProps {
@@ -111,3 +112,35 @@ export interface CreateUserParams {
   email: string;
   password: string;
 }
+
+// type ApiActionResponse<T> = {
+//   success: boolean;
+//   data?: T;
+//   error?: {
+//     message: string;
+//     details?: Record<string, string[]>;
+//   };
+//   status?: number;
+// };
+
+// type SuccessResponse<T> = ApiActionResponse<T> & { success: true };
+// type ErrorResponse = ApiActionResponse<undefined> & { success: false };
+
+// type APIErrorResponse = NextResponse<ErrorResponse>;
+// type APISuccessResponse<T> = NextResponse<SuccessResponse<T>>;
+
+export type ApiSuccessResponse<T> = {
+  success: true;
+  status: number;
+  data: T;
+  token?: string;
+};
+
+export type ApiErrorResponse = {
+  success: false;
+  status: number;
+  error: {
+    message: string;
+    details?: Record<string, string[]>;
+  };
+};

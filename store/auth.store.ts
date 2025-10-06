@@ -1,6 +1,5 @@
-import { getCurrentUser } from "../libs/Appwrite";
-
 import { User } from "@/types/types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 type AuthState = {
@@ -11,7 +10,6 @@ type AuthState = {
   setIsAuthenticated: (value: boolean) => void;
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
-
   fetchAuthenticatedUser: () => Promise<void>;
 };
 
@@ -26,14 +24,34 @@ const useAuthStore = create<AuthState>((set) => ({
 
   fetchAuthenticatedUser: async () => {
     set({ isLoading: true });
+    const token = await AsyncStorage.getItem("token");
+    
+    if (!token) {
+      set({ isAuthenticated: false, isLoading: false });
+      return;
+    }
 
     try {
-      const user = await getCurrentUser();
-      console.log("User", JSON.stringify(user, null, 2));
-      if (user) set({ isAuthenticated: true, user: user as User });
-      else set({ isAuthenticated: false, user: null });
+      const res = await fetch(`/api/auth/verify`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        const user = data.data.user;
+        set({
+          user: {
+            name: user.name,
+            email: user.email,
+            avatar: user.image,
+          },
+          isAuthenticated: true,
+          isLoading: false,
+        });
+      } else set({ isAuthenticated: false, user: null });
     } catch (e) {
-      console.log("fetchAuthenticatedUser error", e);
+      console.log(e);
       set({ isAuthenticated: false, user: null });
     } finally {
       set({ isLoading: false });

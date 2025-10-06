@@ -13,7 +13,12 @@ export const appwriteConfig = {
   projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!,
   platform: "com.Foody.FastFoods",
   databaseId: "68e12cd6000e4c0f50bc",
+  bucketId: "68e233f6001e74b659e1",
   userCollectionId: "users",
+  catgoriesCollectionId: "category",
+  menuCollectionId: "menu",
+  customizationsCollectionId: "customizations",
+  menuCustomizationsCollectionId: "menu_customizations",
 };
 
 export const client = new Client();

@@ -10,12 +10,24 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import CartButton from "@/components/CartButton";
-import { images, offers } from "@/constants";
+import { images, offers, ROUTES } from "@/constants";
 
+import useAuthStore from "@/store/auth.store";
 import { globalStyles } from "@/styles";
 import { scale, verticalScale } from "@/utils";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
 const Index = () => {
+  const { setIsAuthenticated, setUser } = useAuthStore();
+
+  const handleLogOut = () => {
+    AsyncStorage.removeItem("token");
+    setIsAuthenticated(false);
+    setUser(null);
+    router.replace(ROUTES.sign_in);
+  };
+
   return (
     <SafeAreaView>
       <FlatList
@@ -39,6 +51,9 @@ const Index = () => {
                   style={styles.arrowIcon}
                   resizeMode="contain"
                 />
+              </TouchableOpacity>
+              <TouchableOpacity className="my-4" onPress={handleLogOut}>
+                <Text>LOGOUT</Text>
               </TouchableOpacity>
             </View>
 
