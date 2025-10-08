@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-export const apiFetch = async (url: string, options: RequestInit = {}) => {
-  const token = await AsyncStorage.getItem("token");
-
-  return fetch(`$${url}`, {
-    ...options,
-    headers: {
-      ...(options.headers || {}),
-      Authorization: token ? `Bearer ${token}` : "",
-      "Content-Type": "application/json",
-    },
-  });
+export const fetchAPI = async (url: string, options?: RequestInit) => {
+  try {
+    const response = await fetch(url, options);
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw error;
+  }
 };
 
-export const useFetch = <T>(url: string, options?: RequestInit) => {
+export const useFetch = <T>(
+  url: string,
+  method: string,
+  headers?: boolean,
+  requestData?: T
+) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,15 +25,21 @@ export const useFetch = <T>(url: string, options?: RequestInit) => {
     setError(null);
 
     try {
-      const result = await apiFetch(url, options);
-      const resultJson = await result.json();
-      setData(resultJson.data);
+      const resultJson = await fetch(url, {
+        method: method,
+        headers: headers ? { "Content-Type": "application/json" } : undefined,
+        body: requestData ? JSON.stringify(requestData) : null,
+      });
+
+      const result = await resultJson.json();
+
+      setData(result.data);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
     }
-  }, [url, options]);
+  }, [url, headers, method, requestData]);
 
   useEffect(() => {
     fetchData();

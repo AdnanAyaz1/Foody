@@ -1,157 +1,58 @@
-import { ID } from "react-native-appwrite";
-import { appwriteConfig, databases, storage } from "./Appwrite";
+import Category from "@/database/category.model";
+import Customization from "@/database/customization.model";
+import Item from "@/database/item.model";
 import dummyData from "./data";
+import dbConnect from "./mongoose";
+// 🔹 Connect to MongoDB
 
-interface Category {
-  name: string;
-  description: string;
-}
+const seedDatabase = async () => {
+  try {
+    await dbConnect();
 
-interface Customization {
-  name: string;
-  price: number;
-  type: "topping" | "side" | "size" | "crust" | string; // extend as needed
-}
+    // Optional: clear old data first
+    await Promise.all([
+      Category.deleteMany({}),
+      Customization.deleteMany({}),
+      Item.deleteMany({}),
+    ]);
+    console.log("🧹 Old data cleared");
 
-interface MenuItem {
-  name: string;
-  description: string;
-  image_url: string;
-  price: number;
-  rating: number;
-  calories: number;
-  protein: number;
-  category_name: string;
-  customizations: string[]; // list of customization names
-}
+    // 1️⃣ Insert categories
+    const createdCategories = await Category.insertMany(dummyData.categories);
+    const categoryMap = new Map(createdCategories.map((c) => [c.name, c._id]));
+    console.log(`📦 Inserted ${createdCategories.length} categories`);
 
-interface DummyData {
-  categories: Category[];
-  customizations: Customization[];
-  menu: MenuItem[];
-}
-
-// ensure dummyData has correct shape
-const data = dummyData as DummyData;
-
-async function clearAll(collectionId: string): Promise<void> {
-  const list = await databases.listDocuments(
-    appwriteConfig.databaseId,
-    collectionId
-  );
-
-  await Promise.all(
-    list.documents.map((doc) =>
-      databases.deleteDocument(appwriteConfig.databaseId, collectionId, doc.$id)
-    )
-  );
-}
-
-async function clearStorage(): Promise<void> {
-  const list = await storage.listFiles(appwriteConfig.bucketId);
-
-  await Promise.all(
-    list.files.map((file) =>
-      storage.deleteFile(appwriteConfig.bucketId, file.$id)
-    )
-  );
-}
-
-async function uploadImageToStorage(imageUrl: string) {
-  const response = await fetch(imageUrl);
-  const blob = await response.blob();
-
-  const fileObj = {
-    name: imageUrl.split("/").pop() || `file-${Date.now()}.jpg`,
-    type: blob.type,
-    size: blob.size,
-    uri: imageUrl,
-  };
-
-  const file = await storage.createFile(
-    appwriteConfig.bucketId,
-    ID.unique(),
-    fileObj
-  );
-
-  return storage.getFileViewURL(appwriteConfig.bucketId, file.$id);
-}
-
-async function seed(): Promise<void> {
-  console.log("The function runs");
-  // 1. Clear all
-  await clearAll(appwriteConfig.catgoriesCollectionId);
-  await clearAll(appwriteConfig.customizationsCollectionId);
-  await clearAll(appwriteConfig.menuCollectionId);
-  await clearAll(appwriteConfig.menuCustomizationsCollectionId);
-  await clearStorage();
-
-  //2. Create Categories
-  const categoryMap: Record<string, string> = {};
-  for (const cat of data.categories) {
-    const doc = await databases.createDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.catgoriesCollectionId,
-      ID.unique(),
-      cat
+    // 2️⃣ Insert customizations
+    const createdCustomizations = await Customization.insertMany(
+      dummyData.customizations
     );
-    categoryMap[cat.name] = doc.$id;
-  }
-
-  //3. Create Customizations
-  const customizationMap: Record<string, string> = {};
-  for (const cus of data.customizations) {
-    const doc = await databases.createDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.customizationsCollectionId,
-      ID.unique(),
-      {
-        name: cus.name,
-        price: cus.price,
-        type: cus.type,
-      }
+    const customizationMap = new Map(
+      createdCustomizations.map((c) => [c.name, c._id])
     );
-    customizationMap[cus.name] = doc.$id;
+    console.log(`✨ Inserted ${createdCustomizations.length} customizations`);
+
+    // 3️⃣ Insert items (menu)
+    const itemsToInsert = dummyData.menu.map((item) => ({
+      name: item.name,
+      description: item.description,
+      image: item.image_url,
+      price: item.price,
+      ratings: item.rating,
+      category: categoryMap.get(item.category_name),
+      customizations: item.customizations
+        .map((name) => customizationMap.get(name))
+        .filter(Boolean),
+    }));
+
+    await Item.insertMany(itemsToInsert);
+    console.log(`🍔 Inserted ${itemsToInsert.length} items`);
+
+    console.log("✅ Database seeded successfully!");
+    process.exit(0);
+  } catch (error) {
+    console.error("❌ Seeding failed:", error);
+    process.exit(1);
   }
+};
 
-  // 4. Create Menu Items
-  const menuMap: Record<string, string> = {};
-  for (const item of data.menu) {
-    const uploadedImage = await uploadImageToStorage(item.image_url);
-
-    const doc = await databases.createDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.menuCollectionId,
-      ID.unique(),
-      {
-        name: item.name,
-        description: item.description,
-        image_url: uploadedImage,
-        price: item.price,
-        ratings: item.rating,
-        calories: item.calories,
-        protein: item.protein,
-        category: categoryMap[item.category_name],
-      }
-    );
-
-    menuMap[item.name] = doc.$id;
-
-    //   5. Create menu_customizations
-    for (const cusName of item.customizations) {
-      await databases.createDocument(
-        appwriteConfig.databaseId,
-        appwriteConfig.menuCustomizationsCollectionId,
-        ID.unique(),
-        {
-          menu: doc.$id,
-          customizations: customizationMap[cusName],
-        }
-      );
-    }
-  }
-
-  console.log("✅ Seeding complete.");
-}
-
-export default seed;
+seedDatabase();

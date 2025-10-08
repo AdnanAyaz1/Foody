@@ -15,7 +15,10 @@ import {
 const Layout = () => {
   const { isAuthenticated } = useAuthStore();
 
+  console.log("ISAuthenticated");
+
   if (isAuthenticated) return <Redirect href={ROUTES.home} />;
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}

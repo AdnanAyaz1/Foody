@@ -17,10 +17,15 @@ export async function POST(req: Request) {
     const user = await User.findOne({ email: validatedData.email }).select(
       "+password"
     );
+    if (!user) {
+      throw new RequestError(400, "Invalid Email or Password");
+    }
+    const isMatch = await bcrypt.compare(
+      validatedData?.password,
+      user.password
+    );
 
-    const isMatch = await bcrypt.compare(validatedData.password, user.password);
-
-    if (!user || !isMatch) {
+    if (!isMatch) {
       throw new RequestError(401, "Invalid Credentials");
     }
 

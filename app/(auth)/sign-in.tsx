@@ -1,14 +1,13 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, router } from "expo-router";
-import { useForm } from "react-hook-form";
-import { Alert, Text, View } from "react-native";
-
 import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
 import { ROUTES } from "@/constants";
 import { signInSchema, SignInSchema } from "@/libs/schemas/signInSchema";
 import useAuthStore from "@/store/auth.store";
+import { zodResolver } from "@hookform/resolvers/zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Link, router } from "expo-router";
+import { useForm } from "react-hook-form";
+import { Alert, Text, View } from "react-native";
 
 const SignIn = () => {
   const { setIsAuthenticated, setUser } = useAuthStore();

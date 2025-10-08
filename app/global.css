@@ -126,7 +126,7 @@
   }
 
   .body-medium {
-    @apply text-sm font-quicksand-medium;
+    @apply text-sm font-QuicksandMedium;
   }
 
   .body-regular {

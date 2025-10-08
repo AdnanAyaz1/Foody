@@ -6,7 +6,7 @@ import "./global.css";
 
 const RootLayout = () => {
   const { isLoading, fetchAuthenticatedUser } = useAuthStore();
-
+  console.log("i");
   const [fontsLoaded, error] = useFonts({
     "QuickSand-Bold": require("../assets/fonts/Quicksand-Bold.ttf"),
     "QuickSand-Medium": require("../assets/fonts/Quicksand-Medium.ttf"),

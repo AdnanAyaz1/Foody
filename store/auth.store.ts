@@ -25,7 +25,7 @@ const useAuthStore = create<AuthState>((set) => ({
   fetchAuthenticatedUser: async () => {
     set({ isLoading: true });
     const token = await AsyncStorage.getItem("token");
-    
+
     if (!token) {
       set({ isAuthenticated: false, isLoading: false });
       return;
@@ -37,9 +37,9 @@ const useAuthStore = create<AuthState>((set) => ({
       });
 
       const data = await res.json();
-
+      console.log("data", data.data);
       if (data.success) {
-        const user = data.data.user;
+        const user = data.data;
         set({
           user: {
             name: user.name,

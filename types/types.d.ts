@@ -12,6 +12,7 @@ export interface MenuItem extends Models.Document {
 }
 
 export interface Category extends Models.Document {
+  _id:string,
   name: string;
   description: string;
 }
@@ -143,4 +144,26 @@ export type ApiErrorResponse = {
     message: string;
     details?: Record<string, string[]>;
   };
+};
+
+export type category = {
+  _id:string,
+  name: string;
+  desriptionLstring;
+};
+
+export type customization = {
+  name: string;
+  price: number;
+};
+
+export type Item = {
+  _id: string;
+  name: string;
+  description: string;
+  image: string;
+  price: number;
+  ratings: number;
+  category: category;
+  customizations: customization[];
 };
